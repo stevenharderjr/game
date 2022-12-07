@@ -10,6 +10,7 @@
 
   let keys = {};
   export let size = 160;
+  $: radius = size / 2;
   let maxSize = 400;
   $: xMax = -size + (() => window.innerWidth)();
   $: yMax = -size + (() => window.innerHeight)();
