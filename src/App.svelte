@@ -6,7 +6,7 @@
   import timer from './utils/timer.js';
   import Player from './lib/Player.svelte';
   import Drone from './lib/Drone.svelte';
-  import Bouncer from './lib/Bouncer.svelte';
+  import Projectile from './lib/Projectile.svelte';
 
   const move = timer(() => updateBouncers('move'), 16);
   const grow = timer(() => updateBouncers('grow'), 200);
@@ -16,9 +16,10 @@
   const say = messageTimer(text => message = text);
 
   let start;
-  let maxEnemies = 20;
-  let enemies = maxEnemies;
-  $: playerSize = 120;
+  let maxEnemies = 40;
+  let maxProjectiles = 0;
+  let enemies = maxEnemies + maxProjectiles;
+  $: playerSize = Math.max(enemies * 4, 32); //120;
   let drones = [];
     for (let i = 0; i < enemies; i++) drones.push(i);
   let bouncers = [];
@@ -50,7 +51,11 @@
   function confirmKill({ detail: { id: droneId }}) {
     enemies--;
     player.killConfirmed();
-    if (enemies < 1) return endStage();
+    if (enemies - maxProjectiles < 1) return endStage();
+  }
+
+  function handleBounce({ detail }) {
+    player.bounce(detail);
   }
 
   function updateBouncers(method, factor) {
@@ -104,8 +109,11 @@
 <main>
   <div class="container">
     {#each drones as drone, i}
-      <Drone bind:size={playerSize} id={drone} bind:this={bouncers[i + maxEnemies + 1]} player={playerStatus} on:kill={confirmKill} />
-      <Bouncer bind:size={playerSize} id={drone} bind:this={bouncers[i + 1]} player={playerStatus} on:kill={confirmKill} />
+      {#if i > maxEnemies}
+        <Projectile bind:size={playerSize} id={drone} bind:this={bouncers[i + 1]} player={playerStatus} on:bounce={handleBounce} />
+      {:else}
+        <Drone bind:size={playerSize} id={drone} bind:this={bouncers[i + 1]} player={playerStatus} on:kill={confirmKill} />
+      {/if}
     {/each}
     <Player bind:size={playerSize} bind:this={bouncers[0]} on:enter-key={handlePause} />
   </div>

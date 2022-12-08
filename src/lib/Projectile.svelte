@@ -8,16 +8,20 @@
   export let topSpeed = 5;
   export let minSpeed = 1;
   export let id;
-  let boostLimit = 1.5;
+  let boostLimit = 2;
   let maxSize = 160;
   let growthInterval;
   let growthDelay = 250;
 
-  $: xMax = -size + (() => window.innerWidth)();
-  $: yMax = -size + (() => window.innerHeight)();
+  let xMin = -size;
+  let yMin = -size;
+  let xMax = window.innerWidth;
+  let yMax = window.innerHeight;
   let alive = true;
-  let x = ~~(Math.random() * window.innerWidth - size);
-  let y = ~~(Math.random() * window.innerHeight - size);
+  let x = ~~(Math.random() * xMax - size);
+  let y = ~~(Math.random() * yMax - size);
+  x *= Math.round(Math.random()) ? xMax : -xMax;
+  y *= Math.round(Math.random()) ? yMax : -yMax;
   let accel = .2;
 
   let xStep = +(-topSpeed + Math.random() * (topSpeed * 2)).toFixed(2);
@@ -35,13 +39,15 @@
     alive = true;
     x = ~~(Math.random() * window.innerWidth - size);
     y = ~~(Math.random() * window.innerHeight - size);
+    x *= Math.round(Math.random()) ? xMax : -xMax;
+    y *= Math.round(Math.random()) ? yMax : -yMax;
   }
 
   export function resize() {
     const xPrevMax = xMax;
     const yPrevMax = yMax;
-    xMax = window.innerWidth - size;
-    yMax = window.innerHeight - size;
+    xMax = window.innerWidth;
+    yMax = window.innerHeight;
     const xConversion = xPrevMax / xMax;
     const yConversion = yPrevMax / yMax;
     x = ~~(x * xConversion);
@@ -55,16 +61,11 @@
 
     x += xStep;
     y += yStep;
-    if (x > xMax || x < 0) {
-      xStep = -xStep;
-      x = x < 0 ? 0 : xMax;
-      x += xStep;
-    }
-    if (y > yMax || y < 0) {
-      yStep = -yStep;
-      y = y < 0 ? 0 : yMax;
-      y += yStep;
-    }
+    if (x > xMax) x = xMin;
+    if (x < xMin) x = xMax;
+    if (y > yMax) y = yMin;
+    if (y < yMin) y = yMax;
+
     const { x: playerX, y: playerY, size: playerSize, xStep: playerXStep, yStep: playerYStep } = player;
     if (playerSize) {
       if (x + size < playerX + playerSize * .2) return;
@@ -86,72 +87,22 @@
       dispatch('bounce', combinedVector);
       const bounceVector = force(reflect(combinedVector), .8);
       // const bounceVector = vector(positionVector, bouncerVector);
-      xStep = bounceVector.x;
-      yStep = bounceVector.y;
-      x += xStep;
-      y += yStep;
-      if (xStep < 0) {
-        const min = -minSpeed;
-        const max = -topSpeed * boostLimit;
-        if (xStep > min) xStep = min;
-        if (xStep < max) xStep = max;
-      } else {
-        const max = topSpeed * boostLimit;
-        if (xStep < minSpeed) xStep = minSpeed;
-        if (xStep > max) xStep = max;
-      }
+      const { x: vX, y: vY } = bounceVector;
+      x += vX;
+      y += vY;
+      xStep += vX;
+      yStep += vY;
 
-      if (yStep < 0) {
-        const min = -minSpeed;
-        const max = -topSpeed * boostLimit;
-        if (yStep > min) yStep = min;
-        if (yStep < max) yStep = max;
-      } else {
-        const max = topSpeed * boostLimit;
-        if (yStep < minSpeed) yStep = minSpeed;
-        if (yStep > max) yStep = max;
-      }
-      // alive = false;
-      // deathSize = size;
-      // growthFactor = 1;
-      // deadFactor = 4;
-      // dispatch('kill', { id });
+      let max = topSpeed * boostLimit;
+      let min = minSpeed;
+      if (xStep > 0) xStep = (xStep < min) ? min : (xStep > max) ? max : xStep;
+      if (yStep > 0) yStep = (yStep < min) ? min : (yStep > max) ? max : yStep;
+      max = -max;
+      min = -min;
+      if (xStep < 0) xStep = (xStep > min) ? min : (xStep < max) ? max : xStep;
+      if (yStep < 0) yStep = (yStep > min) ? min : (yStep < max) ? max : yStep;
     }
   }
-
-  export function grow() {
-    // if (alive && size > 16) {
-    //   size--;
-    // }
-  }
-
-  // export function respondToInput() {
-  //   if (!alive) return;
-  //   if (keys.ArrowUp) {
-  //     if (yStep > 0) {
-  //       yStep *= (1 - accel);
-  //       if (yStep < minSpeed) yStep = -minSpeed;
-  //     } else if (yStep > -topSpeed) yStep *= (1 + accel);
-  //   }
-  //   if (keys.ArrowDown) {
-  //     if (yStep < 0) {
-  //       yStep *= (1 - accel);
-  //       if (yStep > -minSpeed) yStep = minSpeed;
-  //     } else if (yStep < topSpeed) yStep *= (1 + accel);
-  //   }
-  //   if(keys.ArrowRight) {
-  //     if (xStep < 0) {
-  //       xStep *= (1 - accel);
-  //       if (xStep > -minSpeed) xStep = minSpeed;
-  //     } else if (xStep < topSpeed) xStep *= (1 + accel);
-  //   }
-  //   if(keys.ArrowLeft) {
-  //     if (xStep > 0) {
-  //       xStep *= (1 - accel);
-  //       if (xStep < minSpeed) xStep = -minSpeed;
-  //     } else if (xStep > -topSpeed) xStep *= (1 + accel);
-  //   }
-  // }
 </script>
 
 <div class="bouncer" class:dead={!alive} style="left:{x}px; top:{y}px; height:{size}px; width:{size}px; border-radius:{size / 2}px"></div>

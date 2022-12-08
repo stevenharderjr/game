@@ -1,6 +1,7 @@
 <script>
   // import logo from '../assets/logo192.png';
   import { createEventDispatcher, onMount, onDestroy } from 'svelte';
+  import { force } from '../utils/vector.js'
   // import logo from '../assets/RALOS1.svg';
   export let topSpeed = 5;
   export let minSpeed = 1;
@@ -10,6 +11,7 @@
 
   let keys = {};
   export let size = 160;
+  let minSize = 16;
   $: radius = size / 2;
   let maxSize = 400;
   $: xMax = -size + (() => window.innerWidth)();
@@ -17,6 +19,7 @@
   let x = ~~(window.innerWidth / 2 - size / 2);
   let y = ~~(window.innerHeight / 2 - size / 2);
   const accel = .3;
+  let bounceEffect = .8;
   let rotation = 45;
   let flashDuration = 400;
   let flashingTimeout;
@@ -117,6 +120,22 @@
         if (xStep < minSpeed) xStep = -minSpeed;
       } else if (xStep > -topSpeed) xStep *= (1 + accel);
     }
+  }
+
+  export function bounce(bounceVector) {
+    const { x: vX, y: vY } = force(bounceVector, bounceEffect);
+    x += vX;
+    y += vY;
+    xStep += vX;
+    yStep += vY;
+    let max = topSpeed;
+    let min = minSpeed;
+    if (xStep > 0) xStep = xStep < min ? min : xStep > max ? max : xStep;
+    if (yStep > 0) yStep = yStep < min ? min : yStep > max ? max : yStep;
+    min = -minSpeed;
+    max = -topSpeed;
+    if (xStep < 0) xStep = xStep > min ? min : xStep < max ? max : xStep;
+    if (yStep < 0) yStep = yStep > min ? min : yStep < max ? max : yStep;
   }
 
   // export function grow() {
