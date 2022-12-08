@@ -17,9 +17,9 @@
 
   let start;
   let maxEnemies = 40;
-  let maxProjectiles = 0;
+  let maxProjectiles = 20;
   let enemies = maxEnemies + maxProjectiles;
-  $: playerSize = Math.max(enemies * 4, 32); //120;
+  $: playerSize = Math.max((enemies - maxProjectiles) * 4, 32); //120;
   let drones = [];
     for (let i = 0; i < enemies; i++) drones.push(i);
   let bouncers = [];
@@ -51,7 +51,7 @@
   function confirmKill({ detail: { id: droneId }}) {
     enemies--;
     player.killConfirmed();
-    if (enemies - maxProjectiles < 1) return endStage();
+    if (enemies - maxProjectiles === -1) return endStage();
   }
 
   function handleBounce({ detail }) {
