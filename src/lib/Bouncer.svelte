@@ -38,16 +38,13 @@
   }
 
   export function resize() {
-    const xPrevMax = xMax;
-    const yPrevMax = yMax;
-    xMax = window.innerWidth - size;
-    yMax = window.innerHeight - size;
-    const xConversion = xPrevMax / xMax;
-    const yConversion = yPrevMax / yMax;
-    x = ~~(x * xConversion);
-    y = ~~(y * yConversion);
-    if (x > xMax) x = xMax;
-    if (y > yMax) y = yMax;
+    const { innerWidth, innerHeight } = window;
+    const xRatio = innerWidth / xMax;
+    const yRatio = innerHeight / yMax;
+    x *= xRatio;
+    y *= yRatio;
+    xMax = innerWidth;
+    yMax = innerHeight;
   }
 
   export function move() {
@@ -65,7 +62,7 @@
       y = y < 0 ? 0 : yMax;
       y += yStep;
     }
-    const { x: playerX, y: playerY, size: playerSize, xStep: playerXStep, yStep: playerYStep } = player;
+    const { x: playerX, y: playerY, size: playerSize, xStep: h, yStep: v } = player;
     if (playerSize) {
       if (x + size < playerX + playerSize * .2) return;
       if (y + size < playerY + playerSize * .2) return;
@@ -75,9 +72,9 @@
       // direction of bouncer to player
       const positionVector = vector({ x: playerX + playerSize / 2, y: playerY + playerSize / 2 }, { x: x + size / 2, y: y + size / 2 });
       // player trajectory
-      const playerVector = vector(player, { x: playerXStep, y: playerYStep });
+      const playerVector = vector(player, { h, v });
       // bouncer trajectory
-      const bouncerVector = vector(bouncer, { x: xStep, y: yStep });
+      const bouncerVector = vector(bouncer, { h: xStep, v: yStep });
       // median of player and bouncer trajectories?
       const newVector = vector(playerVector, bouncerVector);
       // median of median trajectory and position direction
@@ -90,6 +87,7 @@
       yStep = bounceVector.y;
       x += xStep;
       y += yStep;
+
       if (xStep < 0) {
         const min = -minSpeed;
         const max = -topSpeed * boostLimit;
@@ -111,47 +109,8 @@
         if (yStep < minSpeed) yStep = minSpeed;
         if (yStep > max) yStep = max;
       }
-      // alive = false;
-      // deathSize = size;
-      // growthFactor = 1;
-      // deadFactor = 4;
-      // dispatch('kill', { id });
     }
   }
-
-  export function grow() {
-    // if (alive && size > 16) {
-    //   size--;
-    // }
-  }
-
-  // export function respondToInput() {
-  //   if (!alive) return;
-  //   if (keys.ArrowUp) {
-  //     if (yStep > 0) {
-  //       yStep *= (1 - accel);
-  //       if (yStep < minSpeed) yStep = -minSpeed;
-  //     } else if (yStep > -topSpeed) yStep *= (1 + accel);
-  //   }
-  //   if (keys.ArrowDown) {
-  //     if (yStep < 0) {
-  //       yStep *= (1 - accel);
-  //       if (yStep > -minSpeed) yStep = minSpeed;
-  //     } else if (yStep < topSpeed) yStep *= (1 + accel);
-  //   }
-  //   if(keys.ArrowRight) {
-  //     if (xStep < 0) {
-  //       xStep *= (1 - accel);
-  //       if (xStep > -minSpeed) xStep = minSpeed;
-  //     } else if (xStep < topSpeed) xStep *= (1 + accel);
-  //   }
-  //   if(keys.ArrowLeft) {
-  //     if (xStep > 0) {
-  //       xStep *= (1 - accel);
-  //       if (xStep < minSpeed) xStep = -minSpeed;
-  //     } else if (xStep > -topSpeed) xStep *= (1 + accel);
-  //   }
-  // }
 </script>
 
 <div class="bouncer" class:dead={!alive} style="left:{x}px; top:{y}px; height:{size}px; width:{size}px; border-radius:{size / 2}px"></div>

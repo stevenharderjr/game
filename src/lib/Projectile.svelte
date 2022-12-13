@@ -44,16 +44,13 @@
   }
 
   export function resize() {
-    const xPrevMax = xMax;
-    const yPrevMax = yMax;
-    xMax = window.innerWidth;
-    yMax = window.innerHeight;
-    const xConversion = xPrevMax / xMax;
-    const yConversion = yPrevMax / yMax;
-    x = ~~(x * xConversion);
-    y = ~~(y * yConversion);
-    if (x > xMax) x = xMax;
-    if (y > yMax) y = yMax;
+    const { innerWidth, innerHeight } = window;
+    const xRatio = innerWidth / xMax;
+    const yRatio = innerHeight / yMax;
+    x *= xRatio;
+    y *= yRatio;
+    xMax = innerWidth;
+    yMax = innerHeight;
   }
 
   export function move() {
@@ -66,19 +63,18 @@
     if (y > yMax) y = yMin;
     if (y < yMin) y = yMax;
 
-    const { x: playerX, y: playerY, size: playerSize, xStep: playerXStep, yStep: playerYStep } = player;
+    const { x: playerX, y: playerY, size: playerSize, h: playerH, v: playerV } = player;
     if (playerSize) {
       if (x + size < playerX + playerSize * .2) return;
       if (y + size < playerY + playerSize * .2) return;
       if (x > playerX + playerSize * .8) return;
       if (y > playerY + playerSize * .8) return;
-      const bouncer = { x, y };
       // direction of bouncer to player
-      const positionVector = vector({ x: playerX + playerSize / 2, y: playerY + playerSize / 2 }, { x: x + size / 2, y: y + size / 2 });
+      const positionVector = vector({ h: playerX + playerSize / 2, v: playerY + playerSize / 2 }, { h: x + size / 2, v: y + size / 2 });
       // player trajectory
-      const playerVector = vector(player, { x: playerXStep, y: playerYStep });
+      const playerVector = vector({ h: playerX, v: playerY }, { h: playerH, v: playerV});
       // bouncer trajectory
-      const bouncerVector = vector(bouncer, { x: xStep, y: yStep });
+      const bouncerVector = vector({ h: x, v: y }, { h: xStep, v: yStep });
       // median of player and bouncer trajectories?
       const newVector = vector(playerVector, bouncerVector);
       // median of median trajectory and position direction
@@ -87,7 +83,7 @@
       dispatch('bounce', combinedVector);
       const bounceVector = force(reflect(combinedVector), .8);
       // const bounceVector = vector(positionVector, bouncerVector);
-      const { x: vX, y: vY } = bounceVector;
+      const { h: vX, v: vY } = bounceVector;
       x += vX;
       y += vY;
       xStep += vX;

@@ -24,7 +24,7 @@
     for (let i = 0; i < enemies; i++) drones.push(i);
   let bouncers = [];
   let playerStatus = { x: -100, y: -100, size: 0, xSte: 0, yStep: 0 };
-  let playing = true;
+  let paused = false;
   let movementDelay = 16;
   let growthDelay = 15000;
   let stopMoving = () => {};
@@ -70,19 +70,19 @@
   }
 
   function handlePause() {
-    if (playing) {
+    if (paused) {
       if (enemies < 1) return handleRestart();
-      stopMoving();
-      stopGrowing();
       clearMessage();
-      playing = false;
-      clearMessage = say(["COLLIDE WITH DRONES TO DESTROY THEM", "USE ARROW KEYS TO CHANGE SPEED & DIRECTION", "FINISH IN LESS THAN A MINUTE TO SEE YOUR TIME", "PRESS [ENTER] TO RESUME PLAYING"], -1);
-    } else {
-      clearMessage();
-      playing = true;
+      paused = false;
       clearMessage = say("GAME ON!")
       stopMoving = move();
       stopGrowing = grow();
+    } else {
+      stopMoving();
+      stopGrowing();
+      clearMessage();
+      paused = true;
+      clearMessage = say(["COLLIDE WITH DRONES TO DESTROY THEM", "USE ARROW KEYS TO CHANGE SPEED & DIRECTION", "FINISH IN LESS THAN A MINUTE TO SEE YOUR TIME", "PRESS [ENTER] TO RESUME PLAYING"], -1);
     }
     return;
   }
@@ -119,12 +119,12 @@
   </div>
   <div class="overlay">
   {#if message}
-    <div class="opacity">
-      {#if playing}
-        <h2 class="message">{message}</h2>
-      {:else}
+    <div class="opacity" on:click={handleRestart}>
+      {#if paused}
         <h2 class="message">PAUSED</h2>
         <span class="message">{message}</span>
+      {:else}
+        <h2 class="message">{message}</h2>
       {/if}
     </div>
   {/if}
